@@ -127,9 +127,17 @@ class Assignment2(object):
         """
         error = 0.0
         high_prob_intervals = [(0, 0.2), (0.4, 0.6), (0.8, 1)]  # P[y=1|x] = 0.8 / P[y=0|x] = 0.2
-        low_prob_intervals = [(0.2, 0.4), (0.6, 0.8)]  # P[y=1|x] = 0.1 / P[y=0|x] = 0.9
-        high_prob = 0.8
-        low_prob = 0.1
+        low_prob_intervals = [(0.2, 0.4), (0.6, 0.8)]           # P[y=1|x] = 0.1 / P[y=0|x] = 0.9
+
+        # create intervals for 0 guesses
+        inverse_interval_list = []
+        i_start, i_end = 0, 0
+        for r in range(len(interval_list)):
+            start, end = interval_list[r]
+            i_end = start
+            inverse_interval_list.append((i_start, i_end))
+            i_start = end
+        inverse_interval_list.append((i_start, 1))
 
         def compute_prob(interval, true_interval_list, prob):
             total_prob = 0.0
@@ -157,8 +165,16 @@ class Assignment2(object):
             return total_prob
 
         for interval in interval_list:
-            error += compute_prob(interval, high_prob_intervals, high_prob)
-            error += compute_prob(interval, low_prob_intervals, low_prob)
+            # mistake penalty for guess 1 in high_prob_intervals
+            error += compute_prob(interval, high_prob_intervals, 0.2)
+            # mistake penalty for guess 1 in low_prob_intervals
+            error += compute_prob(interval, low_prob_intervals, 0.9)
+
+        for interval in inverse_interval_list:
+            # mistake penalty for guess 0 in high_prob_intervals
+            error += compute_prob(interval, high_prob_intervals, 0.8)
+            # mistake penalty for guess 0 in low_prob_intervals
+            error += compute_prob(interval, low_prob_intervals, 0.1)
 
         return error
 
