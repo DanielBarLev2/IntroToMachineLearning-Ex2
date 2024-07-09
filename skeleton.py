@@ -54,8 +54,8 @@ class Assignment2(object):
         ns = np.arange(m_first, m_last + 1, step)
 
         for n in ns:
+
             es_sum, ep_sum = 0.0, 0.0
-            print(n/5)
             for _ in range(T):
                 samples = self.sample_from_D(n)
                 samples = samples[np.argsort(samples[:, 0])]
@@ -69,12 +69,12 @@ class Assignment2(object):
             es_avg.append(es_sum / T)
             ep_avg.append(ep_sum / T)
 
-        plt.plot(ns, es_avg, label='Empirical Error')
-        plt.plot(ns, ep_avg, label='True Error')
-        plt.xlabel('Sample Size (n)')
-        plt.ylabel('Error')
-        plt.legend()
-        plt.show()
+        # plt.plot(ns, es_avg, label='Empirical Error')
+        # plt.plot(ns, ep_avg, label='True Error')
+        # plt.xlabel('Sample Size (n)')
+        # plt.ylabel('Error')
+        # plt.legend()
+        # plt.show()
 
         return np.array([es_avg, ep_avg]).T
 
@@ -83,13 +83,45 @@ class Assignment2(object):
         Plots the empirical and true errors as a function of k.
         Input: m - an integer, the size of the data sample.
                k_first - an integer, the maximum number of intervals in the first experiment.
-               m_last - an integer, the maximum number of intervals in the last experiment.
+               k_last - an integer, the maximum number of intervals in the last experiment.
                step - an integer, the difference between the size of k in each experiment.
 
         Returns: The best k value (an integer) according to the ERM algorithm.
         """
-        # TODO: Implement the loop
-        pass
+        ks = np.arange(k_first, k_last + 1, step)
+
+        samples = self.sample_from_D(m)
+        samples = samples[np.argsort(samples[:, 0])]
+        data, labels = samples[:, 0], samples[:, 1]
+
+        es_list = []
+        ep_list = []
+
+        for k in ks:
+            print("k: ", k)
+            best_intervals, es = intervals.find_best_interval(xs=data, ys=labels, k=k)
+            es_list.append(es / m)
+
+            ep = self.compute_true_error(best_intervals)
+            ep_list.append(ep)
+
+        # k with the smallest empirical error for ERM
+        k_star = ks[np.argmin(es_list)]
+        print("k_star: ", k_star)
+
+        bar_width = 0.4
+        r1 = [x - bar_width / 2 for x in ks]  # positions for the first bar group
+        r2 = [x + bar_width / 2 for x in ks]  # positions for the second bar group
+        # Create bar plots
+        plt.bar(r1, es_list, width=bar_width, label='Empirical Error')
+        plt.bar(r2, ep_list, width=bar_width, label='True Error')
+        # Add labels and title
+        plt.xlabel('k value')
+        plt.ylabel('Empirical errors')
+        plt.xticks(ks)  # ensure that the x-ticks correspond to the ks values
+        plt.legend()
+
+        return k_star
 
     def experiment_k_range_srm(self, m, k_first, k_last, step):
         """Run the experiment in (c).
@@ -181,8 +213,8 @@ class Assignment2(object):
 
 if __name__ == '__main__':
     ass = Assignment2()
-    ass.sample_from_D(100)
-    ass.experiment_m_range_erm(10, 100, 5, 3, 100)
+    # ass.sample_from_D(100)
+    # ass.experiment_m_range_erm(10, 100, 5, 3, 100)
     ass.experiment_k_range_erm(1500, 1, 10, 1)
     ass.experiment_k_range_srm(1500, 1, 10, 1)
     ass.cross_validation(1500)
