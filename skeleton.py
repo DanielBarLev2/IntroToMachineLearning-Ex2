@@ -109,17 +109,16 @@ class Assignment2(object):
         k_star = ks[np.argmin(es_list)]
         print("k_star: ", k_star)
 
-        bar_width = 0.4
-        r1 = [x - bar_width / 2 for x in ks]  # positions for the first bar group
-        r2 = [x + bar_width / 2 for x in ks]  # positions for the second bar group
-        # Create bar plots
-        plt.bar(r1, es_list, width=bar_width, label='Empirical Error')
-        plt.bar(r2, ep_list, width=bar_width, label='True Error')
-        # Add labels and title
-        plt.xlabel('k value')
-        plt.ylabel('Empirical errors')
-        plt.xticks(ks)  # ensure that the x-ticks correspond to the ks values
-        plt.legend()
+        # bar_width = 0.4
+        # r1 = [x - bar_width / 2 for x in ks]  # positions for the first bar group
+        # r2 = [x + bar_width / 2 for x in ks]  # positions for the second bar group
+        # plt.bar(r1, es_list, width=bar_width, label='Empirical Error')
+        # plt.bar(r2, ep_list, width=bar_width, label='True Error')
+        # plt.xlabel('k value')
+        # plt.ylabel('Empirical errors')
+        # plt.xticks(ks)
+        # plt.legend()
+        # plt.show()
 
         return k_star
 
@@ -134,8 +133,56 @@ class Assignment2(object):
 
         Returns: The best k value (an integer) according to the SRM algorithm.
         """
-        # TODO: Implement the loop
-        pass
+        ks = np.arange(k_first, k_last + 1, step)
+
+        samples = self.sample_from_D(m)
+        samples = samples[np.argsort(samples[:, 0])]
+        data, labels = samples[:, 0], samples[:, 1]
+
+        es_list = []
+        ep_list = []
+        penalty_list = []
+        combined_error_list = []
+
+        for k in ks:
+            print("k: ", k)
+            best_intervals, es = intervals.find_best_interval(xs=data, ys=labels, k=k)
+            es_list.append(es / m)
+
+            ep = self.compute_true_error(best_intervals)
+            ep_list.append(ep)
+            print("ep: ", ep)
+            print("best_intervals: ", best_intervals)
+
+            penalty = self.penalty_function(k, m)
+            penalty_list.append(penalty)
+
+            combined_error = (es / m) + penalty
+            combined_error_list.append(combined_error)
+
+        k_star_combined = ks[np.argmin(combined_error_list)]
+        print(f"The k* with the smallest combined error is: {k_star_combined}")
+
+        # Plotting the results
+        plt.plot(ks, es_list, label='Empirical Error')
+        plt.plot(ks, ep_list, label='True Error')
+        plt.plot(ks, penalty_list, label='Penalty')
+        plt.plot(ks, combined_error_list, label='Combined Error')
+        plt.xlabel('Number of Intervals (k)')
+        plt.ylabel('Error')
+        plt.legend()
+        plt.show()
+
+        bar_width = 0.4
+        r1 = [x - bar_width / 2 for x in ks]  # positions for the first bar group
+        r2 = [x + bar_width / 2 for x in ks]  # positions for the second bar group
+        plt.bar(r1, es_list, width=bar_width, label='Empirical Error')
+        plt.bar(r2, ep_list, width=bar_width, label='True Error')
+        plt.xlabel('k value')
+        plt.ylabel('Empirical errors')
+        plt.xticks(ks)
+        plt.legend()
+        plt.show()
 
     def cross_validation(self, m):
         """Finds a k that gives a good test error.
@@ -182,6 +229,10 @@ class Assignment2(object):
                 if start <= low <= high <= end:
                     total_prob += (high - low) * prob
 
+                # the true_interval is containing the interval
+                if low <= start <= end <= high:
+                    total_prob += (end - start) * prob
+
                 # the start point of true_interval contained in the interval
                 elif start <= low <= end <= high:
                     total_prob += (end - low) * prob
@@ -210,11 +261,18 @@ class Assignment2(object):
 
         return error
 
+    @staticmethod
+    def penalty_function(k, n):
+        """Calculate the penalty function."""
+        delta_k = 0.1 / (k ** 2)
+        vc_dim = 2 * k  # computed and proved in theoretical part
+        return 2 * np.sqrt((vc_dim + np.log(2 / delta_k) / n))
+
 
 if __name__ == '__main__':
     ass = Assignment2()
     # ass.sample_from_D(100)
     # ass.experiment_m_range_erm(10, 100, 5, 3, 100)
-    ass.experiment_k_range_erm(1500, 1, 10, 1)
+    # ass.experiment_k_range_erm(1500, 1, 10, 1)
     ass.experiment_k_range_srm(1500, 1, 10, 1)
-    ass.cross_validation(1500)
+    # ass.cross_validation(1500)
